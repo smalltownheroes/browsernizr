@@ -17,18 +17,25 @@ unAMD = (src, reqPath='./') ->
     for i in [0...modules.length]
       req += "var #{ names[i] } = " if names[i]?.length > 0
       req += "require('#{ reqPath }#{ modules[i] }');\n"
+    #console.log req
     src = "#{ req }\n#{ src }\n"
   if exports?
     src += "\nmodule.exports = #{ exports[1] };"
   return src
 
-findFiles = (location) ->
-  find(location).filter (file) -> !fs.statSync(file).isDirectory()
+findLibFiles = (location) ->
+  find(location).filter (file) -> 
+    !fs.statSync(file).isDirectory() and file.indexOf('/') is -1
+
+findTestFiles = (location) ->
+  find(location).filter (file) -> 
+    !fs.statSync(file).isDirectory()
+
 
 work_dir = path.resolve __dirname, './../'
 modernizr_dir = path.join work_dir, './node_modules/modernizr'
 lib_dir = path.join work_dir, './lib'
-tests_dir = path.join work_dir, './test'
+tests_dir = path.join work_dir, './lib/test'
 
 # cleanup
 rm '-rf', "#{ lib_dir }/*"
@@ -41,18 +48,26 @@ cp '-r', './feature-detects/*', "#{ tests_dir }/"
 
 # replace asynchronous defines with require and exports
 cd lib_dir
-for file in findFiles '.'
+for file in findLibFiles '.'
+  #console.log file
   src = cat file
   unAMD(src).to file
 
+
+
 cd tests_dir
-for file in findFiles '.'
+for file in findTestFiles '.'
   src = cat file
   depth = file.split('/').length
   libPath = './'
   for [0...depth]
     libPath += '../'
-  libPath += 'lib/'
+  
+  #console.log libPath, file
+  #unless libPath.indexOf('test') > -1
+  #libPath += 'lib/'
+
+
   unAMD(src, libPath).to file
 
 
