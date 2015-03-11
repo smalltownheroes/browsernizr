@@ -1,6 +1,7 @@
 var Modernizr = require('./../../lib/Modernizr');
 var createElement = require('./../../lib/createElement');
 var prefixes = require('./../../lib/prefixes');
+require('./../../lib/test/css/supports');
 
 /*!
 {
@@ -8,7 +9,12 @@ var prefixes = require('./../../lib/prefixes');
   "property": "cssfilters",
   "caniuse": "css-filters",
   "polyfills": ["polyfilter"],
-  "tags": ["css"]
+  "tags": ["css"],
+  "builderAliases": ["css_filters"],
+  "notes": [{
+    "name": "MDN article on CSS filters",
+    "href": "https://developer.mozilla.org/en-US/docs/Web/CSS/filter"
+  }]
 }
 !*/
 
@@ -17,7 +23,16 @@ var prefixes = require('./../../lib/prefixes');
   Modernizr.addTest('cssfilters', function() {
     var el = createElement('div');
     el.style.cssText = prefixes.join('filter:blur(2px); ');
-    return !!el.style.length && ((document.documentMode === undefined || document.documentMode > 9));
+    if (Modernizr.supports) {
+      var supports = 'CSS' in window ?
+        window.CSS.supports('filter', 'url()') :
+        window.supportsCSS('filter', 'url()');
+
+      // older firefox only supports `url` filters;
+      return supports;
+    } else {
+      return !!el.style.length && ((document.documentMode === undefined || document.documentMode > 9));
+    }
   });
 
 
